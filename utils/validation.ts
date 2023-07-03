@@ -1,10 +1,9 @@
 import { BadRequestException } from '@nestjs/common';
 import { ZodError, ZodTypeAny } from 'zod';
 
-export function validateSchema(schema: ZodTypeAny, payload: any) {
+export function validateSchema(schema: ZodTypeAny, payload: any): void {
   try {
     schema.parse(payload);
-    return true;
   } catch (e: unknown) {
     if (e instanceof ZodError) {
       console.log(e.issues);
