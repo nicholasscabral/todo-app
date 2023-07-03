@@ -51,9 +51,29 @@ export class AuthService {
     return tokens;
   }
 
-  async logout() {}
+  async logout(userId: string) {
+    await this.prisma.user.updateMany({
+      where: { id: userId, refreshToken: { not: null } },
+      data: { refreshToken: null },
+    });
+  }
 
-  async refreshTokens() {}
+  async refreshTokens(userId: string, rt: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) throw new ForbiddenException('Access denied');
+
+    const rtMatches = await bcrypt.compare(rt, user.refreshToken);
+
+    if (!rtMatches) throw new ForbiddenException('Access denied');
+
+    const tokens = await this.generateTokens(user.id, user.email);
+    await this.updateRtHash(user.id, tokens.refreshToken);
+
+    return tokens;
+  }
 
   async updateRtHash(userId: string, rt: string) {
     const hash: string = await this.hashData(rt);
